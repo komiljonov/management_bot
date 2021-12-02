@@ -1,4 +1,11 @@
 from utils import *
+done = "✅"
+prev = "⏮"
+next = "⏭"
+comment = "💬"
+cross = "❌"
+trash = "🗑"
+reload = "🔄"
 
 NAME, DESCRIPTION, NUMBER, DESCRIPTION, WAIT, MENU = range(6)
 
