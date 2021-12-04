@@ -45,6 +45,8 @@ class _Authentication:
             update.message.reply_text(f"Sizning so'rovingiz {request_statuses[res['status']]}!", reply_markup=ReplyKeyboardRemove())
         elif res['status'] == 1:
             update.message.reply_text("Sizning so'rovingiz qabul qilindi!", reply_markup=ReplyKeyboardRemove())
+            keys = keyboards.make_menu_keyboards()
+            update.message.reply_text("Bosh menu!", reply_markup=keys)
             return MENU
         else:
             update.message.reply_text("Kechirasiz sizning so'rovingiz topilmadi!\nIltimos qayta ro'yxatdan o'ting!\nIsmingizni yuboring!", reply_markup=ReplyKeyboardRemove())
