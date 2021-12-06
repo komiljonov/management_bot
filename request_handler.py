@@ -13,6 +13,8 @@ cross = "❌"
 trash = "🗑"
 reload = "🔄"
 
+
+
 class send_request_handler:
     def req_type(self, update:Update, context:CallbackContext):
         user = update.message.from_user
@@ -21,7 +23,8 @@ class send_request_handler:
         context.user_data['request_confirmers'] = []
         if req_type is not None:
             context.user_data['req_type'] = req_type
-            update.message.reply_text("Iltimos shablonni yuboring text yoki fayl ko'rinishida!", reply_markup=replykeyboardremove.ReplyKeyboardRemove())
+            print(req_type['template'], type(req_type['template']))
+            update.message.reply_text(f"<b>Iltimos so'rov malumotlarini to'g'irlab yuboring!</b>\n\n{req_type['template'] if not None else ''}", reply_markup=replykeyboardremove.ReplyKeyboardRemove(), parse_mode=ParseMode.HTML)
             return GET_TEMPLATE
         else:
             update.message.reply_text("Kechirasiz joriy so'rov turi topilmadi!")
@@ -32,7 +35,7 @@ class send_request_handler:
         req_template = update.message.text
         context.user_data['req_template'] = req_template
         keys = keyboards.make_users_keyboard(update, context)
-        update.message.reply_text("Iltimos endi tasdiqlashi mumkin bo'lgan foydalanuvchuni tanlang!", reply_markup=keys)
+        context.user_data['select_users_msg'] = update.message.reply_text("Iltimos endi tasdiqlashi mumkin bo'lgan foydalanuvchuni tanlang!", reply_markup=keys)
         return SELECT_CONFIRMERS
 
     
@@ -55,19 +58,22 @@ class send_request_handler:
         request_type = context.user_data['req_type']
         request_template = context.user_data['req_template']
         request_confirmers = context.user_data['request_confirmers']
+        if request_confirmers == []:
+            update.callback_query.answer("Kechirasiz siz hali tasdiqlovchilarni tanlamadingiz!\nSo'rovni yuborish uchun kamida bitta tasdiqlovchi tanlang!", True)
+            return SELECT_CONFIRMERS
         update.callback_query.message.reply_text("Iltimos so'rov to'g'riligini tasdiqlang!")
         db.get_admins_by_list(request_confirmers, user.id)
 
         confers_text = ""
         for conf in db.get_admins_by_list(request_confirmers, user.id)['data']:
-            url = helpers.create_deep_linked_url(conf['username'],"check-this-out",)
-            confers_text += f"[{conf['name']}](t.me{url})\n"
+            confers_text += f"{conf['name']} (@{conf['username']})\n"
 
-        text = f"so'rov turi: {request_type['name']}\nshablon:\n{request_template}\n\ntasdiqlovchilar\n\n{confers_text}"
-        update.callback_query.message.reply_text(text, reply_markup=InlineKeyboardMarkup([[
+        text = f"<b>so'rov turi</b>: {request_type['name']}\n<b>shablon:</b>\n<b>-------------------------------</b>\n{request_template}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>\n\n{confers_text}"
+        context.user_data['select_users_msg'].delete()
+        context.user_data['confirm_request_msgmsg'] =  update.callback_query.message.reply_text(text, reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(f"{done} tasdiqlash", callback_data="temp_accept_request_true"),
             InlineKeyboardButton(f"{cross} bekor qilish", callback_data="error_request_false")
-        ]]), parse_mode="MarkdownV2", disable_web_page_preview=True)
+        ]]), disable_web_page_preview=True, parse_mode=ParseMode.HTML)
         return CHECK_REQUEST_TRUE_OR_FALSE
 
         # db.create_request(user.id,request_type, request_template, request_confirmers)
@@ -75,7 +81,7 @@ class send_request_handler:
     def cancel_request(self,update:Update, context:CallbackContext):
         user = update.callback_query.from_user
         keys = keyboards.make_menu_keyboards()
-        update.message.reply_text("Sizning so'rovingiz bekor qilindi!", reply_markup=keys)
+        update.callback_query.message.reply_text("Sizning so'rovingiz bekor qilindi!", reply_markup=keys)
         return MENU
     
 
@@ -87,23 +93,27 @@ class send_request_handler:
         admins = db.get_admins_by_list(request_confirmers, user.id)
         confers_text = ""
         for conf in db.get_admins_by_list(request_confirmers, user.id)['data']:
-            confers_text += f"{conf['name']}\n"
+            confers_text += f"{conf['name']} (@{conf['username']})\n"
         
-        text = f"so'rov turi: {request_type['name']}\nshablon:\n{request_template}\n\ntasdiqlovchilar\n\n{confers_text}"
         new_req = db.create_request(user.id, request_type['id'], request_template, request_confirmers)
         new_db_req = msg_db.create_request_2(new_req['data']['id'])
+        text = f"<b>So'rov raqami: </b>{new_req['data']['id']}\n<b>Yuboruvchi</b>: {user.first_name} (@{user.username})\n<b>so'rov turi</b>: {request_type['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{request_template}\n<b>-------------------------------</b>\n\n<b>tasdiqlovchilar</b>\n\n{confers_text}"
 
         for admin in admins['data']:
-            msg_id = context.bot.send_message(text=f"Yangi so'rov!\n\n{text}\nyuboruvchi: {user.name}", chat_id=admin['chat_id'], reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(f"{done} so'rovni tasdiqlash", callback_data=f"confirm_user_request:{new_req['data']['id']}"),
-                InlineKeyboardButton(f"{cross} so'rovni rad etish", callback_data=f"deny_user_request:{new_req['data']['id']}")
-            ]]))
-            print(new_db_req)
+            try:
+                msg_id = context.bot.send_message(text=f"<b>Yangi so'rov!</b>\n\n{text}\nyuboruvchi: {user.name}", chat_id=admin['chat_id'], reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton(f"{done} so'rovni tasdiqlash", callback_data=f"confirm_user_request:{new_req['data']['id']}"),
+                    InlineKeyboardButton(f"{cross} so'rovni rad etish", callback_data=f"deny_user_request:{new_req['data']['id']}")
+                ]]), parse_mode=ParseMode.HTML)
+                msg_db.create_message_2(new_db_req[0][1], msg_id.message_id, admin['chat_id'])
+            except Exception as e:
+                print(e)
+        context.user_data['confirm_request_msgmsg'].delete()
 
-            msg_db.create_message_2(new_db_req[0][1], msg_id.message_id, admin['chat_id'])
         update.callback_query.message.reply_text("So'rovingiz yuborildi!")
-        update.callback_query.message.reply_text(text)
+        update.callback_query.message.reply_text(text, parse_mode=ParseMode.HTML)
         return CHECK_REQUEST_TRUE_OR_FALSE
+        
     
     def error_request(self, update:Update, context:CallbackContext):
         context.user_data['req_type'] = None

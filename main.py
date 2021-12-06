@@ -1,3 +1,4 @@
+from typing import Text
 from requests.models import parse_url
 from telegram.ext import *
 from telegram import *
@@ -7,6 +8,7 @@ from authenticate import authentication
 from request_handler import *
 from telegram.utils import helpers
 import datetime
+from decorators import *
 
 
 def make_time_str(format: str = None):
@@ -14,6 +16,20 @@ def make_time_str(format: str = None):
     if format is not None:
         return time.strftime(format)
     return time.strftime("%d.%m.%Y %H:%M:%S")
+
+def check_auth(callback:callable):
+    def wrapper(update:Update, context:CallbackContext):
+        try:
+            user = update.message.from_user
+        except Exception as e:
+            user = update.callback_query.from_user
+        db_user = db.check_request_status(user.id)
+        if db_user['status'] == None:
+            context.user_data['greeting'] = update.message.reply_text("Assalomu alaykum bo'timizga xush kelibsiz!\nSiz bizning bo'timizdan ro'yxatdan o'tishingiz lozim!\nIltimos ism va familyangizni yozing!\nMison uchun:\n    Komiljonvo Shukurullox", reply_markup=ReplyKeyboardRemove())
+            return NAME
+        else:
+            return authentication.wait_start(update, context)
+    return wrapper
 
 
 class Bot(Updater):
@@ -23,22 +39,17 @@ class Bot(Updater):
 
         self.conversation = ConversationHandler(
             entry_points=[
-                CommandHandler('start', self.start), CallbackQueryHandler(
-                    self.accept_request_admin, pattern="^accept_request"),
-                CallbackQueryHandler(
-                    self.deny_request_admin, pattern="^deny_request"),
-                CallbackQueryHandler(
-                    self.accept_request_from_user, pattern="^confirm_user_request"),
-                CallbackQueryHandler(
-                    self.deny_request_from_user, pattern="^deny_user_request")
+                CommandHandler('start', self.start), CallbackQueryHandler(self.accept_request_admin, pattern="^accept_request"),
+                CallbackQueryHandler(self.deny_request_admin, pattern="^deny_request"),
+                CallbackQueryHandler(self.accept_request_from_user, pattern="^confirm_user_request"),
+                CallbackQueryHandler(self.deny_request_from_user, pattern="^deny_user_request")
             ],
             states={
                 NAME: [MessageHandler(Filters.text, authentication.name)],
                 NUMBER: [MessageHandler(Filters.contact | Filters.regex("(?:\+[9]{2}[8][0-9]{2}[0-9]{3}[0-9]{2}[0-9]{2})"), authentication.number), ],
                 DESCRIPTION: [MessageHandler(Filters.text, authentication.description), ],
                 WAIT: [CommandHandler('start', authentication.wait_start)],
-                MENU: [MessageHandler(Filters.regex(
-                    "^So'rov yuborish$"), self.send_request)],
+                MENU: [MessageHandler(Filters.regex("^So'rov yuborish$"), self.send_request), MessageHandler(Filters.regex("^Kutilayotgan so'rovlar"), self.get_waiting_sent_requests), MessageHandler(Filters.regex("^Tasdiqlanmagan so'rovlar"), self.unconfirmed_requests)],
                 SELECT_REQUEST_TYPE: [MessageHandler(Filters.text, send_request_handler.req_type)],
                 GET_TEMPLATE: [MessageHandler(Filters.text, send_request_handler.get_template_text)],
                 SELECT_CONFIRMERS: [CallbackQueryHandler(send_request_handler.add_confirmer, pattern="^add_confirmer"), CallbackQueryHandler(send_request_handler.remove_confirmer, pattern="^remove_confirmer"), CallbackQueryHandler(send_request_handler.done_request, pattern="^done_request"), CallbackQueryHandler(send_request_handler.cancel_request, pattern="^cancel_request")],
@@ -47,39 +58,50 @@ class Bot(Updater):
                     Filters.text, self.get_comment_for_request)]
             },
             fallbacks=[CommandHandler('start', self.start), CallbackQueryHandler(self.accept_request_admin, pattern="^accept_request"),
-                       CallbackQueryHandler(
-                           self.deny_request_admin, pattern="^deny_request"),
-                       CallbackQueryHandler(
-                           self.accept_request_from_user, pattern="^confirm_user_request"),
+                       CallbackQueryHandler(self.deny_request_admin, pattern="^deny_request"),
+                       CallbackQueryHandler(self.accept_request_from_user, pattern="^confirm_user_request"),
                        CallbackQueryHandler(self.deny_request_from_user, pattern="^deny_user_request")]
         )
-        # self.dispatcher.add_handler(CallbackQueryHandler(self.accept_request_admin, pattern="^accept_request"))
-        # self.dispatcher.add_handler(CallbackQueryHandler(self.deny_request_admin, pattern="^deny_request"))
-        # self.dispatcher.add_handler(CallbackQueryHandler(self.accept_request_from_user, pattern="^confirm_user_request"))
-        # self.dispatcher.add_handler(CallbackQueryHandler(self.deny_request_from_user, pattern="^deny_user_request"))
         self.dispatcher.add_handler(self.conversation)
         self.start_polling()
         print('polling')
         self.idle()
 
+    def is_authed_decorator(function:callable):
+        def wrapper(self: "Bot", update:Update, context:CallbackContext):
+            try: user = update.message.from_user
+            except: user = update.callback_query.from_user
+            au = db.is_authed(user.id)
+            print(au)
+            if au:
+                return function(self,update, context)
+            else:
+                # return self.conversation.handle_update(update, context.dispatcher, self.conversation.check_update(update), context)
+                return self.start(update, context)
+        return wrapper
+
     def start(self, update: Update, context: CallbackContext):
-        user = update.message.from_user
+        print(self.dispatcher.handlers)
+        try:user = update.message.from_user
+        except: user = update.callback_query.from_user
         db_user = db.check_request_status(user.id)
         if db_user['status'] == None:
-            update.message.reply_text(
-                "Assalomu alaykum bo'timizga xush kelibsiz!\nSiz bizning bo'timizdan ro'yxatdan o'tishingiz lozim!\nIltimos ism va familyangizni yozing!\nMison uchun:\n    Komiljonvo Shukurullox", reply_markup=ReplyKeyboardRemove())
+            context.user_data['greeting'] = update.message.reply_text("Assalomu alaykum bo'timizga xush kelibsiz!\nSiz bizning bo'timizdan ro'yxatdan o'tishingiz lozim!\nIltimos ism va familyangizni yozing!\nMison uchun:\n    Komiljonvo Shukurullox", reply_markup=ReplyKeyboardRemove())
             return NAME
         else:
-            return authentication.wait_start(update, context)
+            return authentication.wait_start(update, context) 
 
+    @is_authed_decorator
     def send_request(self, update: Update, context: CallbackContext):
         user = update.message.from_user
         request_types = db.get_request_types(user.id)
+        print(request_types)
         keys = ReplyKeyboardMarkup(distribute(
             [d['name'] for d in request_types['data']], 2), resize_keyboard=True)
         update.message.reply_text("So'rov turini tanlang!", reply_markup=keys)
         return SELECT_REQUEST_TYPE
 
+    @is_authed_decorator
     def accept_request_admin(self, update: Update, context: CallbackContext):
         user = update.callback_query.from_user
         db_user = db.check_request_status(user.id)
@@ -97,10 +119,7 @@ class Bot(Updater):
                     name = db_req['name']
                     number = db_req['number']
                     username = db_req['username']
-
-                    # url = helpers.create_deep_linked_url(context.bot.username, user.username)
-                    text = f"Tizimga kirish uchun so'rov tasdiqlandi!\n\nismi: {name}\nraqami: {number}\nusername: {username}\nTasdiqlovchi: <a href=\"https://t.me{user.username}\">{user.first_name} {make_time_str()} </a>"
-
+                    text = f"Tizimga kirish uchun so'rov tasdiqlandi!\n\n<b>ismi</b>: {name}\n<b>raqami</b>: {number}\n<b>username</b>: {username}\n<b>Tasdiqlovchi</b>: <a href=\"https://t.me{user.username}\">{user.first_name}</a>\n<b>Tasdiqlash vaqti:</b> {make_time_str()}"
                     for msg in messages:
                         msg_id = msg[2]
                         chat_id = msg[3]
@@ -108,7 +127,8 @@ class Bot(Updater):
                             text, chat_id, msg_id, reply_markup=keyboard, parse_mode=ParseMode.HTML)
 
                     # update.callback_query.message.edit_text(text, reply_markup=keyboard)
-
+    
+    @is_authed_decorator
     def deny_request_admin(self, update: Update, context: CallbackContext):
         user = update.callback_query.from_user
         db_user = db.check_request_status(user.id)
@@ -127,13 +147,14 @@ class Bot(Updater):
                         f"{done} Ruhsat berish", callback_data=f"accept_request:{iddd}")]])
                     messages = msg_db.get_messages(iddd)
 
-                    text = f"Tizimga kirish uchun so'rov bekor qilindi!\nismi: {name}\nraqami: {number}\nusername: {username}\nBekor qiluvchi:  <a href=\"https://t.me{user.username}\">{user.first_name}</a> {make_time_str()}\n\n"
+                    text = f"Tizimga kirish uchun so'rov bekor qilindi!\n<b>ismi</b>: {name}\n<b>raqami</b>: {number}\n<b>username</b>: {username}\n<b>Bekor qiluvchi</b>:  <a href=\"https://t.me{user.username}\">{user.first_name}</a>\n<b>Tasdiqlash vaqti:</b> {make_time_str()}\n\n"
                     for msg in messages:
                         msg_id = msg[2]
                         chat_id = msg[3]
                         context.bot.edit_message_text(
                             text, chat_id, msg_id, reply_markup=keyboard, parse_mode=ParseMode.HTML)
 
+    @is_authed_decorator
     def accept_request_from_user(self, update: Update, context: CallbackContext):
         user = update.callback_query.from_user
         context.user_data['checked_request_status'] = 0
@@ -143,66 +164,102 @@ class Bot(Updater):
             "Iltimos so'rov uchun fikringizni yozing!", reply_markup=ReplyKeyboardRemove())
         return GET_COMMENT_FOR_REQUEST
 
+    @is_authed_decorator
     def deny_request_from_user(self, update: Update, context: CallbackContext):
         user = update.callback_query.from_user
         context.user_data['checked_request_status'] = 1
         context.user_data['checking_request'] = int(
             update.callback_query.data.split(":")[1])
-        update.message.reply_text(
+        update.callback_query.message.reply_text(
             "Iltimos so'rov uchun fikringizni yozing!", reply_markup=ReplyKeyboardRemove())
         return GET_COMMENT_FOR_REQUEST
 
+    @is_authed_decorator
     def get_comment_for_request(self, update: Update, context: CallbackContext):
         print("Komment qabul qilindi!")
         user = update.message.from_user
         keys = keyboards.make_menu_keyboards()
-        req = db.get_request_from_user(
-            user.id, context.user_data['checking_request'])
-        if context.user_data['checked_request_status'] == 0:
-            print(req['data']['id'])
-            sent_req = msg_db.get_request_2(req['data']['id'])
-            sent_msgs = msg_db.get_messages_2(sent_req[0])
+        req = db.get_request_from_user(user.id, context.user_data['checking_request'])
+        req_db = db.get_request_from_user(user.id, req['data']['id'])['data']
+        print(req_db)
 
-            for msg in sent_msgs:
-                print(msg)
+
+        if context.user_data['checked_request_status'] == 0:
+            sent_req = msg_db.get_request_2(req['data']['id'])
+            sent_msgs = msg_db.get_messages_2(sent_req[0][1])
+            confers_text = ""
+            for conf in req_db['confirmers']:
+                confers_text += f"{conf['name']}\n"
+            text = f"<b>So'rov tasdiqlandi!</b>\n<b>So'rov raqami</b>: {req['data']['id']}\n<b>so'rov turi</b>: {req_db['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req_db['template']}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>:\n<b>-------------------------------</b>\n\n{confers_text}\n<b>-------------------------------</b>\ntasdiqlovchi: {user.first_name} (@{user.username})"
+            update_status = db.update_request_status(user.id, req_db['id'], 1)
+            if update_status['ok']:
+                for msg in sent_msgs:
+                    # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
+                    context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
+                context.bot.send_message(text=text, chat_id=req_db['user']['chat_id'], parse_mode=ParseMode.HTML)
+
         else:
-            pass
+            sent_req = msg_db.get_request_2(req['data']['id'])
+            sent_msgs = msg_db.get_messages_2(sent_req[0][1])
+            confers_text = ""
+            for conf in req_db['confirmers']:
+                confers_text += f"{conf['name']}\n"
+            # text = f"<b>So'rov bekor qilindi!</b>\nSo'rov raqami: {req['data']['id']}\nso'rov turi: {req_db['req_type']['name']}\nshablon:\n{req_db['template']}\n\ntasdiqlovchilar\n\n{confers_text}\ntasdiqlovchi: {user.first_name}"
+            text = f"<b>So'rov rad etildi!</b>\n<b>So'rov raqami</b>: {req['data']['id']}\n<b>so'rov turi</b>: {req_db['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req_db['template']}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>:\n<b>-------------------------------</b>\n\n{confers_text}\n<b>-------------------------------</b>\n<b>rad etuvchi</b>: {user.first_name} (@{user.username})\n<b>"
+            update_status = db.update_request_status(user.id, req_db['id'], 2)
+            print(update_status)
+            error_users = []
+            if update_status['ok']:
+                for msg in sent_msgs:
+                    # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
+                    try:
+                        context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
+                    except Exception as e:
+                        error_users.append(msg)
+                context.bot.send_message(text=text, chat_id=req_db['user']['chat_id'], parse_mode=ParseMode.HTML)
 
         update.message.reply_text(
             checkkkk[context.user_data['checked_request_status']], reply_markup=keys)
         return MENU
+    
+
+    @is_authed_decorator
+    def get_waiting_sent_requests(self, update:Update, context:CallbackContext):
+        user = update.message.from_user
+        reqs= db.get_waiting_sent_requests(user.id)
+        if reqs['ok'] and len(reqs['data']) > 0:
+            for req in reqs['data']:
+                confers_text = ""
+                for coner in req['confirmers']:
+                    confers_text += f"{coner['name']}\n"
+                text = f"<b>So'rov raqami</b>: №{req['id']}\n<b>so'rov turi</b>: {req['req_type']['name']}\n<b>shablon</b>:\n{req['template']}\n\n<b>tasdiqlovchilar</b>\n\n{confers_text}"
+                update.message.reply_text(text, parse_mode="HTML")
+        else: update.message.reply_text("Kechirasiz hozircha so'rovlar yo'q!", reply_markup=keyboards.make_menu_keyboards()); return MENU
+        
+
+    @is_authed_decorator
+    def unconfirmed_requests(self,update: Update, context:CallbackContext):
+        user = update.message.from_user
+        reqs= db.get_waiting_come_requests(user.id)
+        if reqs['ok'] and any(isinstance(x, dict) for x in reqs['data']):
+            if len(reqs['data']) > 0:
+                for req in reqs['data']:
+                    confers_text = ""
+                    if req == None:
+                        continue
+                    for coner in req.get('confirmers', None):
+                        if coner != {}:
+                            confers_text += f"{coner['name']}\n"
+                    
+                    text = f"<b>So'rov raqami</b>: №{req['id']}\n<b>so'rov turi</b>: {req['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req['template']}\n\n<b>-------------------------------</b>\n\n<b>tasdiqlovchilar</b>\n{confers_text}\n\n<b>Yuboruvchir</b>\n{req['user']['name']} (@{req['user']['username']})"
+                    update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton(f"{done} so'rovni tasdiqlash", callback_data=f"confirm_user_request:{req['id']}"),
+                    InlineKeyboardButton(f"{cross} so'rovni rad etish", callback_data=f"deny_user_request:{req['id']}")
+                ]]))
+        else:
+            update.message.reply_text("Kechirasiz hozircha so'rovlar yo'q!", reply_markup=keyboards.make_menu_keyboards())
+            return MENU
+
 
 
 bot = Bot(TOKEN)
-
-
-# I can help you create and manage Telegram bots. If you're new to the Bot API, please see the manual (https://core.telegram.org/bots).
-
-# You can control me by sending these commands:
-
-# /newbot - create a new bot
-# /mybots - edit your bots [beta]
-
-# Edit Bots
-# /setname - change a bot's name
-# /setdescription - change bot description
-# /setabouttext - change bot about info
-# /setuserpic - change bot profile photo
-# /setcommands - change the list of commands
-# /deletebot - delete a bot
-
-# Bot Settings
-# /token - generate authorization token
-# /revoke - revoke bot access token
-# /setinline - toggle inline mode
-#  (https://core.telegram.org/bots/inline)/setinlinegeo - toggle inline location requests
-#  (https://core.telegram.org/bots/inline#location-based-results)/setinlinefeedback - change inline feedback (https://core.telegram.org/bots/inline#collecting-feedback) settings
-# /setjoingroups - can your bot be added to groups?
-# /setprivacy - toggle privacy mode (https://core.telegram.org/bots#privacy-mode) in groups
-
-# Games
-# /mygames - edit your games (https://core.telegram.org/bots/games) [beta]
-# /newgame - create a new game
-#  (https://core.telegram.org/bots/games)/listgames - get a list of your games
-# /editgame - edit a game
-# /deletegame - delete an existing game

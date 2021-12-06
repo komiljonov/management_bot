@@ -5,7 +5,7 @@ host = "http://192.168.0.188:8000"
 
 
 def request_authorization(user_id: str, name_surname: str, description: str, number, user_name: str):
-    res = requests.get(f'{host}/create_request/', json={
+    res = requests.get(f'{host}/create_request_user/', json={
         "name": str(name_surname),
         "phone": str(number),
         "chat_id": str(user_id),
@@ -21,8 +21,11 @@ def request_authorization(user_id: str, name_surname: str, description: str, num
 def check_request_status(user_id: int):
     res = requests.get(f'{host}/check_user/', json={
         "chat_id": user_id
-    }).json()
-    return res
+    })
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
 
 
 # check_user(2343434)
@@ -37,13 +40,19 @@ def get_admins_list(user_id: int):
     res = requests.get(f'{host}/admin_list/', json={
         "chat_id": user_id
     })
-    return res.json()['data']
+    if res.status_code == 200:
+        return res.json()['data']
+    else:
+        return None
 
 def get_users_list(user_id: int):
     res = requests.get(f'{host}/users_list/', json={
         "chat_id": user_id
     })
-    return res.json()['data']
+    if res.status_code == 200:
+        return res.json()['data']
+    else:
+        return None
 
 
 def accept_request_admin(user_id: int, req: int) -> bool:
@@ -52,7 +61,10 @@ def accept_request_admin(user_id: int, req: int) -> bool:
         "rq": req,
         "status": 1
     })
-    return res.json()
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
 
 
 def deny_request_admin(user_id: int, req: int) -> bool:
@@ -61,13 +73,21 @@ def deny_request_admin(user_id: int, req: int) -> bool:
         "rq": req,
         "status": 2
     })
-    return res.json()
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
 
 def get_request_types(user_id:id):
+
     res = requests.get(f'{host}/request_types/', json={
         "chat_id": user_id,
     })
-    return res.json()
+    print(res.text)
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
 
 def get_req_type(user_id:int, name:str):
     reqs = get_request_types(user_id)
@@ -82,10 +102,15 @@ def get_req_type(user_id:int, name:str):
 
 
 def get_request(req_id:int):
+    print(req_id)
     res = requests.get(f'{host}/get_request/', json={
         "req": req_id,
     })
-    return res.json()
+    # print(res.text)
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
 
 def create_request(user_id:int, req_type:int, req_template:str, req_confirmers:list[int]):
     res = requests.get(f'{host}/create_request/', json={
@@ -94,14 +119,20 @@ def create_request(user_id:int, req_type:int, req_template:str, req_confirmers:l
         "req_confirmers": req_confirmers,
         "user": user_id
     })
-    return res.json()
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
 
 
 def get_admins_by_list(admins:list[int], user_id:int):
     res = requests.get(f'{host}/get_admins_by_list/', json={
         "confirmers": admins
     })
-    return res.json()
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
 
 
 
@@ -109,4 +140,60 @@ def get_request_from_user(user_id:int, req_id:int):
     res = requests.get(f'{host}/get_request_from_user/', json={
         "req_id": req_id,
     })
-    return res.json()
+    print(res)
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
+
+
+
+def update_request_status(user_id:int, req_id:int, status:int):
+    res = requests.get(f'{host}/request_status_update/', json={
+        "req_id": req_id,
+        "status": status,
+        "chat_id": user_id
+    })
+    print(res.text)
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
+
+
+
+def get_waiting_sent_requests(user_id:int):
+    res = requests.get(f'{host}/get_waiting_sent_requests/', json={
+        "chat_id": user_id 
+    })
+    print(res.text)
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
+
+
+
+def get_waiting_come_requests(user_id:int):
+    res = requests.get(f'{host}/get_waiting_come_requests/', json={
+        "chat_id": user_id 
+    })
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return None
+
+
+
+# def check_request_status(user_id: int):
+#     res = requests.get(f'{host}/check_user/', json={
+#         "chat_id": user_id
+#     })
+#     if res.status_code == 200:
+#         return res.json()
+#     else:
+#         return None
+
+def is_authed(user_id:int):
+    db_user = check_request_status(user_id)
+    return db_user['status'] == 1

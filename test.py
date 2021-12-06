@@ -1,9 +1,6 @@
-import datetime
-import tzlocal
+x = 10
+y = x
 
-def make_time_str(format:str=None):
-    time = datetime.datetime.now()
-    if format is not None:
-        return time.strftime(format)
-    return time.strftime("%d.%m.%Y %H:%M:%S")
-make_time_str()
+
+print(x.__sizeof__())
+print(y.__sizeof__())
