@@ -209,7 +209,6 @@ class Bot(Updater):
         req = db.get_request_from_user(user.id, int(
             update.callback_query.data.split(":")[1]))['data']
         sent_req = msg_db.get_request_2(req['id'])
-        sent_msgs = msg_db.get_messages(sent_req[0][1])
         sent_msgs2 = msg_db.get_messages_2(sent_req[0][1])
         confers_text = ""
 
@@ -220,11 +219,6 @@ class Bot(Updater):
             text = f"<b>So'rov tasdiqlandi!</b>\n<b>So'rov raqami</b>: {req['id']}\n<b>so'rov turi</b>: {req['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req['template']}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>:\n<b>-------------------------------</b>\n\n{confers_text}\n<b>-------------------------------</b>\ntasdiqlovchi: {user.first_name} (@{user.username})"
             update_status = db.update_request_status(user.id, req['id'], 1)
             if update_status['ok']:
-                for msg in sent_msgs:
-                    # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
-                    context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML).pin()
-                context.bot.send_message(text=text, chat_id=req['user']['chat_id'], parse_mode=ParseMode.HTML).pin()
-
                 for msg in sent_msgs2:
                     # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
                     context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML).pin()
@@ -236,15 +230,6 @@ class Bot(Updater):
                 text = f"<b>So'rov tasdiqlandi!</b>\n<b>So'rov raqami</b>: {req['id']}\n<b>so'rov turi</b>: {req['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req['template']}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>:\n<b>-------------------------------</b>\n\n{confers_text}\n<b>-------------------------------</b>\ntasdiqlovchi: {user.first_name} (@{user.username})"
                 update_status = db.update_request_status(user.id, req['id'], 1)
                 if update_status['ok']:
-                    for msg in sent_msgs:
-                        try:
-                            # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
-                            context.bot.edit_message_text(
-                                text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
-                            context.bot.send_message(
-                                text=text, chat_id=msg[3], parse_mode=ParseMode.HTML).pin()
-                        except:
-                            pass
                     
                     for msg in sent_msgs2:
                         try:
@@ -299,7 +284,6 @@ class Bot(Updater):
             user.id, context.user_data['checking_request'])
         req_db = db.get_request_from_user(user.id, req['data']['id'])['data']
         sent_req = msg_db.get_request_2(req['data']['id'])
-        sent_msgs = msg_db.get_messages(sent_req[0][1])
         sent_msgs2 = msg_db.get_messages_2(sent_req[0][1])
 
         req = db.update_request_status(
@@ -308,13 +292,6 @@ class Bot(Updater):
 
         error_users = []
         if req['ok']:
-            for msg in sent_msgs:
-                # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
-                try:
-                    context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
-                    m = context.bot.send_message(text=text, chat_id=msg[3], parse_mode=ParseMode.HTML).pin()
-                except Exception as e:
-                    error_users.append(msg)
             
 
             for msg in sent_msgs2:
