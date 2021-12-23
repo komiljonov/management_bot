@@ -125,7 +125,8 @@ class send_request_handler:
         context.user_data['req_template'] = ""
         user = update.callback_query.message.from_user
         request_types = db.get_request_types(user.id)
-        keys = ReplyKeyboardMarkup(distribute([ d['name'] for d in request_types['data'] ], 2), resize_keyboard=True)
+        keys = ReplyKeyboardMarkup(distribute(
+                [d['name'] for d in request_types['data']], 2) + [[f"◀️ ortga"]], resize_keyboard=True)
         update.callback_query.message.reply_text("Iltimos so'rov turini qaytadan tanlang!", reply_markup=keys)
         context.user_data['confirm_request_msgmsg'].delete()
         return SELECT_REQUEST_TYPE
