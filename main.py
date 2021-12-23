@@ -123,11 +123,7 @@ class Bot(Updater):
                     context.user_data['greeting'] = update.message.reply_text(
                         "Iltimos ismingizni yozing!", reply_markup=ReplyKeyboardRemove())
                 else:
-                    context.user_data['greeting'] = update.message.reply_text("""Assalomu alaykum bo'timizga xush kelibsiz!
-Siz bizning bo'timizdan ro'yxatdan o'tishingiz lozim!
-Iltimos ism va familyangizni yozing!
-Mison uchun:
-    Komiljonvo Shukurullox""", reply_markup=ReplyKeyboardRemove())
+                    context.user_data['greeting'] = update.message.reply_html(f"""Assalomu alaykum <b>{user.first_name}</b>!\n\n<b>Ismingiz va familyangizni kiriting!</b>""", reply_markup=ReplyKeyboardRemove())
                 return NAME
         else:
             if not len(context.args if not context.args == None else []) <= 1 and context.args[0] == 'get_description':
