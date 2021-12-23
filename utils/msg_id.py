@@ -87,7 +87,6 @@ class Messages_db:
         return res
     
     def get_messages_2(self, req_id:int):
-        print(req_id)
         res = self.cur.execute(f"SELECT * FROM messages_2 WHERE req={req_id}")
         return self.cur.fetchall()
 

@@ -42,3 +42,47 @@ def format_number(string:str):
             substrings.insert(0, string[:j])
         return " ".join(substrings)
 
+
+def is_confirmer(req, user):
+    
+    for conf in req['req_type']['confirmers']:
+        if conf['chat_id'] == user.id:
+            return True
+    return False
+
+DASHES = '-' * 30
+statuses = ["kutilmoqda", "tasdiqlandi", "rad etildi"]
+def format_request_to_text(req:dict):
+    print(req)
+    confers_text = ""
+    print(req)
+    for coner in req['req_type'].get('confirmers', []):
+        confers_text += f"{coner['name']} @{coner['username']}"
+    text = f"""<b>So'rov raqami:</b> {req['id']}
+<b>So'rov turi:</b> {req['req_type']['name']}\n<b>So'rov malumotlari:</b>
+<b>{DASHES}</b>
+{req['template']}
+{DASHES}
+<b>Tasdiqlovchilar:</b>
+{DASHES}
+{ confers_text }
+{DASHES}
+<b>Xolati:</b>{statuses[req['status']]}
+{ f"<b>{ 'Tasdiqladi' if req['status'] == 1 else 'Rad etdi' }:</b> {req['confirmer']['name']} (@{req['confirmer']['username']})" if req['status'] != 0 else "" }
+<b>Yuboruvchi:</b> {req['user']['name']} (@{req['user']['username']})"""
+    return text
+
+
+
+import requests
+
+def download_file(url):
+    local_filename = f"data.xlsx" 
+    # NOTE the stream=True parameter below
+    print(local_filename)
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    return open(local_filename, 'rb')

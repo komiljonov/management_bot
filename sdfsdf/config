@@ -1,0 +1,13 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "heroku"]
+	url = https://git.heroku.com/manager-komiljonov.git
+	fetch = +refs/heads/*:refs/remotes/heroku/*
+[remote "demo_app"]
+	url = git@github.com:KOMILJONOV/management_bot.git
+	fetch = +refs/heads/*:refs/remotes/demo_app/*

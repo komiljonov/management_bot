@@ -1,38 +1,26 @@
+import json
 import requests
 from sqlite3 import *
+
+from telegram import user
 # from constants import *
-host = "http://192.168.0.188:8000"
+host = "http://167.172.242.90"
 
-
-def request_authorization(user_id: str, name_surname: str, description: str, number, user_name: str):
+def request_authorization(user_id: str, name_surname: str, number, user_name: str):
     res = requests.get(f'{host}/create_request_user/', json={
         "name": str(name_surname),
         "phone": str(number),
         "chat_id": str(user_id),
-        "desc": str(description),
         "username": str(user_name)
     })
-    if res.status_code == 200:
-        return res.json()
-    else:
-        return None
+    return res.json()
 
 
 def check_request_status(user_id: int):
     res = requests.get(f'{host}/check_user/', json={
         "chat_id": user_id
     })
-    if res.status_code == 200:
-        return res.json()
-    else:
-        return None
-
-
-# check_user(2343434)
-
-# def get_request_types() -> list:
-#     res = requests.get(f'{host}/get_request_types/').json()
-#     return res['data']
+    return res.json()
 
 
 
@@ -102,7 +90,6 @@ def get_req_type(user_id:int, name:str):
 
 
 def get_request(req_id:int):
-    print(req_id)
     res = requests.get(f'{host}/get_request/', json={
         "req": req_id,
     })
@@ -112,11 +99,10 @@ def get_request(req_id:int):
     else:
         return None
 
-def create_request(user_id:int, req_type:int, req_template:str, req_confirmers:list[int]):
+def create_request(user_id:int, req_type:int, req_template:str):
     res = requests.get(f'{host}/create_request/', json={
         "req_type": req_type,
         "request_template": req_template,
-        "req_confirmers": req_confirmers,
         "user": user_id
     })
     if res.status_code == 200:
@@ -129,6 +115,7 @@ def get_admins_by_list(admins:list[int], user_id:int):
     res = requests.get(f'{host}/get_admins_by_list/', json={
         "confirmers": admins
     })
+
     if res.status_code == 200:
         return res.json()
     else:
@@ -148,11 +135,12 @@ def get_request_from_user(user_id:int, req_id:int):
 
 
 
-def update_request_status(user_id:int, req_id:int, status:int):
+def update_request_status(user_id:int, req_id:int, status:int, description:str=None):
     res = requests.get(f'{host}/request_status_update/', json={
         "req_id": req_id,
         "status": status,
-        "chat_id": user_id
+        "chat_id": user_id,
+        "desc": description
     })
     print(res.text)
     if res.status_code == 200:
@@ -178,22 +166,78 @@ def get_waiting_come_requests(user_id:int):
     res = requests.get(f'{host}/get_waiting_come_requests/', json={
         "chat_id": user_id 
     })
-    if res.status_code == 200:
+    print(res.text)
+    try:
         return res.json()
-    else:
+    except:
         return None
 
 
 
-# def check_request_status(user_id: int):
-#     res = requests.get(f'{host}/check_user/', json={
-#         "chat_id": user_id
-#     })
-#     if res.status_code == 200:
-#         return res.json()
-#     else:
-#         return None
-
 def is_authed(user_id:int):
     db_user = check_request_status(user_id)
     return db_user['status'] == 1
+
+
+
+def register_group(chat_id:int, name:int):
+    res = requests.get(f'{host}/register_group/', json={
+        "chat_id": chat_id,
+        "name": name
+    })
+    print(res.text)
+    try:
+        return res.json()
+    except:
+        return None
+
+def get_group(chat_id:int):
+    res = requests.get(f'{host}/get_group/', json={
+        "chat_id": chat_id,
+    })
+    try:
+        return res.json()
+    except:
+        return None
+
+    
+
+def get_confirmed_come_requests(user_id:int):
+    res = requests.get(f"{host}/get_confirmed_come_requests/", json={
+        "chat_id": user_id
+    })
+    print(res.text)
+    try:
+        return res.json()
+    except:
+        return None
+
+def get_confirmed_sent_requests(user_id:int):
+    res = requests.get(f"{host}/get_confirmed_sent_requests/", json={
+        "chat_id": user_id
+    })
+    try:
+        return res.json()
+    except:
+        return None
+
+
+
+def get_denied_come_requests(user_id:int):
+    res = requests.get(f"{host}/get_denied_come_requests/", json={
+        "chat_id": user_id
+    })
+    print(res.text)
+    try:
+        return res.json()
+    except:
+        return None
+
+def get_denied_sent_requests(user_id:int):
+    res = requests.get(f"{host}/get_denied_sent_requests/", json={
+        "chat_id": user_id
+    })
+    try:
+        return res.json()
+    except:
+        return None
