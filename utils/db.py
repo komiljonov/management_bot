@@ -111,7 +111,7 @@ def create_request(user_id:int, req_type:int, req_template:str):
         return None
 
 
-def get_admins_by_list(admins:list[int], user_id:int):
+def get_admins_by_list(admins:list, user_id:int):
     res = requests.get(f'{host}/get_admins_by_list/', json={
         "confirmers": admins
     })

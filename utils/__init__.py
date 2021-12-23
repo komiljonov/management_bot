@@ -21,7 +21,7 @@ def is_odd(a):
 
 
 
-def distribute(items, number) -> list[list]:
+def distribute(items, number) -> list:
     res = []
     start = 0
     end = number
