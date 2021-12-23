@@ -23,6 +23,6 @@ checkkkk = [
     "Fikringiz qabul qilindi va so'rov bekor qilindi!"
 ]
 
-host = "https://murmuring-sierra-73217.herokuapp.com/"
+host = "http://167.172.242.90"
 
 statuses = ["kutilmoqda", "tasdiqlandi", "rad etildi"]
