@@ -53,9 +53,7 @@ def is_confirmer(req, user):
 DASHES = '-' * 30
 statuses = ["kutilmoqda", "tasdiqlandi", "rad etildi"]
 def format_request_to_text(req:dict):
-    print(req)
     confers_text = ""
-    print(req)
     for coner in req['req_type'].get('confirmers', []):
         confers_text += f"{coner['name']} @{coner['username']}"
     text = f"""<b>So'rov raqami:</b> {req['id']}

@@ -10,7 +10,7 @@ import datetime
 from decorators import *
 import time
 
-time.sleep(5)
+time.sleep(3)
 
 
 def make_time_str(format: str = None):
@@ -108,7 +108,6 @@ class Bot(Updater):
         return wrapper
 
     def start(self, update: Update, context: CallbackContext):
-        print("sdfsdfsdf")
         try:
             user = update.message.from_user
         except:
@@ -305,7 +304,6 @@ class Bot(Updater):
 
         req = db.update_request_status(
             user.id, req_db['id'], 2, update.message.text)
-        print(req, "sdfsdfsdfsdfsdf")
         text = format_request_to_text(req['data'])
 
         error_users = []
@@ -391,8 +389,7 @@ class Bot(Updater):
 
     def data(self, update: Update, context: CallbackContext):
         res = download_file(
-            f"https://murmuring-sierra-73217.herokuapp.com/get_excel/")
-        print(res)
+            f"{host}/get_excel/")
         update.message.reply_document(res)
 
     def confirmed_requests(self, update: Update, context: CallbackContext):
@@ -405,8 +402,6 @@ class Bot(Updater):
     def confirmed_come_requests(self, update: Update, context: CallbackContext):
         user = update.message.from_user
         reqs = db.get_confirmed_come_requests(user.id)
-        print('keldi')
-        print(reqs)
         if reqs != None and len(reqs['data']) > 0:
             for req in reqs['data']:
                 confers_text = ""
@@ -426,8 +421,6 @@ class Bot(Updater):
     def confirmed_sent_requests(self, update: Update, context: CallbackContext):
         user = update.message.from_user
         reqs = db.get_confirmed_sent_requests(user.id)
-        print('keldi')
-        print(reqs)
         if reqs != None and len(reqs['data']) > 0:
             for req in reqs['data']:
                 confers_text = ""
@@ -449,14 +442,11 @@ class Bot(Updater):
             "kelgan so'rovlar",
             "yuborilgan so'rovlar",
         ]], resize_keyboard=True))
-        print("Rad etilgan so'rovlar!")
         return DENIED_REQUESTS
 
     def denied_come_requests(self, update: Update, context: CallbackContext):
         user = update.message.from_user
         reqs = db.get_denied_come_requests(user.id)
-        print('keldi')
-        print(reqs)
         if reqs != None and len(reqs['data']) > 0:
             for req in reqs['data']:
                 confers_text = ""
@@ -476,8 +466,6 @@ class Bot(Updater):
     def denied_sent_requests(self, update: Update, context: CallbackContext):
         user = update.message.from_user
         reqs = db.get_denied_sent_requests(user.id)
-        print('keldi')
-        print(reqs)
         if reqs != None and len(reqs['data']) > 0:
             for req in reqs['data']:
                 confers_text = ""

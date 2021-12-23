@@ -32,7 +32,6 @@ class send_request_handler:
         user  = update.message.from_user
         req_template = update.message.text
         context.user_data['req_template'] = req_template
-        print(req_template == "◀️ ortga")
         if req_template == "◀️ ortga":
             request_types = db.get_request_types(user.id)
             if len(request_types['data']):
@@ -63,7 +62,6 @@ class send_request_handler:
             InlineKeyboardButton(f"{done} tasdiqlash", callback_data="temp_accept_request_true"),
             InlineKeyboardButton(f"{cross} bekor qilish", callback_data="error_request_false")
         ]]), disable_web_page_preview=True, parse_mode=ParseMode.HTML)
-        print("go to true or false")
         return CHECK_REQUEST_TRUE_OR_FALSE
 
         # db.create_request(user.id,request_type, request_template, request_confirmers)
@@ -80,7 +78,6 @@ class send_request_handler:
         request_type = context.user_data['req_type']
         request_template = context.user_data['req_template']
         confers_text = ""
-        print("asdfsdfsdfsdfsdfsdfsdfsdf")
 
 
 
