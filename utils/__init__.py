@@ -74,13 +74,21 @@ def format_request_to_text(req:dict):
 
 import requests
 
-def download_file(url):
+
+
+
+def download_file(url, chat_id):
     local_filename = f"data.xlsx" 
     # NOTE the stream=True parameter below
     print(local_filename)
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    return open(local_filename, 'rb')
+    admins = db.get_admins_list(chat_id)
+    print(admins)
+    for admin in admins:
+        if admin['chat_id'] == chat_id:
+            with requests.get(url, stream=True) as r:
+                r.raise_for_status()
+                with open(local_filename, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            return open(local_filename, 'rb')
+    
