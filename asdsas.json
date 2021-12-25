@@ -1,0 +1,34 @@
+{
+    "id": 11,
+    "req_type": {
+        "name": "Xorijiy xarid tovar buyurtmasi",
+        "user": "None",
+        "active": "True",
+        "template": "Zakazni tasdiqlatish uchun shablon:\r\n\r\nYetkazib beruvchi: \r\nTovar nomi:\r\nZaklad summasi: Yo'q / 1000 Yuan(to 'lov sanasi bilan)\r\nTovar summasi: 120000 Yuan\r\nTolov kelishuv sharti: Tovar yo'lga chiqishidan oldin to 'lanadi/ovar yo'lga chiqqandan keyin(..) kun ichida to 'lanadi/Tovar yetib kelgandan keyin to'lanadi.",
+        "created_at ": "2021 - 12 - 04 T13: 48: 52.973 ",
+        "confirmers ": [{
+        "id ": 38,
+        "name ": "fdgdfg ", "phone ": " + 998972666255 ", "chat_id ": 1238844694, "username ": "MHojimurod_1 ", "status ": 1, "created_at ": "
+        2021 - 12 - 20 T19: 22: 11.406 ", "
+        confirmer ": None, "
+        is_admin ": False, "
+        token ": "
+        e36b8bbda0d9aae4741564d659458975 "}], "
+        groups ": []}, "
+        confirmers ": [{"
+        id ": 38, "
+        name ": "
+        fdgdfg ", "
+        phone ": " + 998972666255 ", "
+        chat_id ": 1238844694, "
+        username ": "
+        MHojimurod_1 ", "
+        status ": 1, "
+        created_at ": "
+        2021 - 12 - 20 T19: 22: 11.406 ", "
+        confirmer ": None, "
+        is_admin ": False, "
+        token ": "
+        e36b8bbda0d9aae4741564d659458975 "}], "
+        template ": "
+        sdfsdfdf "}
