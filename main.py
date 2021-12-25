@@ -366,9 +366,13 @@ class Bot(Updater):
 
     def data(self, update: Update, context: CallbackContext):
         res = download_file(
-            f"{host}/get_excel/")
-        update.message.reply_document(res)
-
+            f"{host}/get_excel/", update.message.from_user.id)
+        if res:
+            update.message.reply_document(res)
+        else:
+            update.message.reply_text("Kechirasiz siz admin emassiz!")
+        return MENU
+            
     def confirmed_requests(self, update: Update, context: CallbackContext):
         update.message.reply_text("Kelgan so'rovlarmi yoki yuborilgan!", reply_markup=ReplyKeyboardMarkup([[
             "kelgan so'rovlar",
