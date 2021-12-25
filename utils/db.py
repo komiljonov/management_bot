@@ -73,7 +73,6 @@ def get_request_types(user_id:id):
     res = requests.get(f'{host}/request_types/', json={
         "chat_id": user_id,
     })
-    print(res.text)
     if res.status_code == 200:
         return res.json()
     else:
@@ -95,7 +94,6 @@ def get_request(req_id:int):
     res = requests.get(f'{host}/get_request/', json={
         "req": req_id,
     })
-    # print(res.text)
     if res.status_code == 200:
         return res.json()
     else:
@@ -129,7 +127,6 @@ def get_request_from_user(user_id:int, req_id:int):
     res = requests.get(f'{host}/get_request_from_user/', json={
         "req_id": req_id,
     })
-    print(res)
     if res.status_code == 200:
         return res.json()
     else:
@@ -144,7 +141,6 @@ def update_request_status(user_id:int, req_id:int, status:int, description:str=N
         "chat_id": user_id,
         "desc": description
     })
-    print(res.text)
     if res.status_code == 200:
         return res.json()
     else:
@@ -156,7 +152,6 @@ def get_waiting_sent_requests(user_id:int):
     res = requests.get(f'{host}/get_waiting_sent_requests/', json={
         "chat_id": user_id 
     })
-    print(res.text)
     if res.status_code == 200:
         return res.json()
     else:
@@ -168,7 +163,6 @@ def get_waiting_come_requests(user_id:int):
     res = requests.get(f'{host}/get_waiting_come_requests/', json={
         "chat_id": user_id 
     })
-    print(res.text)
     try:
         return res.json()
     except:
@@ -187,7 +181,6 @@ def register_group(chat_id:int, name:int):
         "chat_id": chat_id,
         "name": name
     })
-    print(res.text)
     try:
         return res.json()
     except:
@@ -208,7 +201,6 @@ def get_confirmed_come_requests(user_id:int):
     res = requests.get(f"{host}/get_confirmed_come_requests/", json={
         "chat_id": user_id
     })
-    print(res.text)
     try:
         return res.json()
     except:
@@ -229,7 +221,6 @@ def get_denied_come_requests(user_id:int):
     res = requests.get(f"{host}/get_denied_come_requests/", json={
         "chat_id": user_id
     })
-    print(res.text)
     try:
         return res.json()
     except:

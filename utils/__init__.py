@@ -80,9 +80,7 @@ import requests
 def download_file(url, chat_id):
     local_filename = f"data.xlsx" 
     # NOTE the stream=True parameter below
-    print(local_filename)
     admins = db.get_admins_list(chat_id)
-    print(admins)
     for admin in admins:
         if admin['chat_id'] == chat_id:
             with requests.get(url, stream=True) as r:
