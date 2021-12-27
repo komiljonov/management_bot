@@ -1,3 +1,4 @@
+import os
 import requests
 from telegram.ext import *
 from telegram import *
@@ -366,10 +367,12 @@ class Bot(Updater):
     def data(self, update: Update, context: CallbackContext):
         res = download_file(
             f"{host}/get_excel/", update.message.from_user.id)
+        file = open(res, 'r')
         if res:
-            update.message.reply_document(res)
+            update.message.reply_document(file)
         else:
             update.message.reply_text("Kechirasiz siz admin emassiz!")
+        os.remove(os.path.abspath(res))
         return MENU
             
     def confirmed_requests(self, update: Update, context: CallbackContext):
