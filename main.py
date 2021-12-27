@@ -254,7 +254,6 @@ class Bot(Updater):
     @is_authed_decorator
     def deny_request_from_user(self, update: Update, context: CallbackContext):
         user = update.callback_query.from_user
-
         req = db.get_request_from_user(user.id, int(
             update.callback_query.data.split(":")[1]))['data']
         if update.callback_query.message.chat.type == "private":
