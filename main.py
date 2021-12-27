@@ -370,9 +370,9 @@ class Bot(Updater):
         file = open(res, 'r')
         if res:
             update.message.reply_document(file)
+            os.remove(os.path.abspath(res))
         else:
             update.message.reply_text("Kechirasiz siz admin emassiz!")
-        os.remove(os.path.abspath(res))
         return MENU
             
     def confirmed_requests(self, update: Update, context: CallbackContext):
