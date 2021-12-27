@@ -66,6 +66,11 @@ def format_request_to_text(req:dict):
 { confers_text }
 {DASHES}
 <b>Xolati:</b>{statuses[req['status']]}
+{ f'''<b>Sababi:</b>
+{DASHES}
+{req['desc']}
+{DASHES}
+''' if req['desc'] != None else ""}
 { f"<b>{ 'Tasdiqladi' if req['status'] == 1 else 'Rad etdi' }:</b> {req['confirmer']['name']} (@{req['confirmer']['username']})" if req['status'] != 0 else "" }
 <b>Yuboruvchi:</b> {req['user']['name']} (@{req['user']['username']})"""
     return text
@@ -88,5 +93,5 @@ def download_file(url, chat_id):
                 with open(local_filename, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         f.write(chunk)
-            return open(local_filename, 'rb')
+            return local_filename
     
