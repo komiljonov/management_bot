@@ -367,8 +367,8 @@ class Bot(Updater):
     def data(self, update: Update, context: CallbackContext):
         res = download_file(
             f"{host}/get_excel/", update.message.from_user.id)
-        file = open(res, 'rb')
         if res:
+            file = open(res, 'rb')
             update.message.reply_document(file)
             os.remove(os.path.abspath(res))
         else:
