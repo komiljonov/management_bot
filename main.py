@@ -222,7 +222,9 @@ class Bot(Updater):
             if update_status['ok']:
                 for msg in sent_msgs2:
                     # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
-                    context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML).pin()
+                    try:
+                        context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML).pin()
+                    except: pass
                 context.bot.send_message(text=text, chat_id=req['user']['chat_id'], parse_mode=ParseMode.HTML).pin()
         else:
             if is_confirmer(req, user):
