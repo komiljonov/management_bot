@@ -119,12 +119,8 @@ class Bot(Updater):
                 update.message.reply_text("Iltimos botdan ro'yhatdan o'tish uchun quyodagi tugmani bosing👇", reply_markup=InlineKeyboardMarkup(
                     [[InlineKeyboardButton("Bo'tga o'tish!", url=helpers.create_deep_linked_url(context.bot.username, "register"))]]))
             else:
-                if len(context.args if not None else []) >= 1 and context.args[0] == 'register':
-                    context.user_data['greeting'] = update.message.reply_text(
-                        "Iltimos ismingizni yozing!", reply_markup=ReplyKeyboardRemove())
-                else:
-                    context.user_data['greeting'] = update.message.reply_html(f"""Assalomu alaykum <b>{user.first_name}</b>!\n\n<b>Ismingiz va familyangizni kiriting!</b>""", reply_markup=ReplyKeyboardRemove())
-                return NAME
+              		context.user_data['greeting'] = update.message.reply_html(f"""Assalomu alaykum <b>{user.first_name}</b>!\n\n<b>Ismingiz va familyangizni kiriting!</b>""", reply_markup=ReplyKeyboardRemove())
+            return NAME
         else:
             if not len(context.args if not context.args == None else []) <= 1 and context.args[0] == 'get_description':
                 update.message.reply_text("Iltimos fikringizni yozing!")
@@ -222,8 +218,10 @@ class Bot(Updater):
             if update_status['ok']:
                 for msg in sent_msgs2:
                     # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
-                    context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML).pin()
-                context.bot.send_message(text=text, chat_id=req['user']['chat_id'], parse_mode=ParseMode.HTML).pin()
+			try:
+                    		context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML).pin()
+			except: pass
+		context.bot.send_message(text=text, chat_id=req['user']['chat_id'], parse_mode=ParseMode.HTML).pin()
         else:
             if is_confirmer(req, user):
                 for conf in req['req_type']['confirmers']:
