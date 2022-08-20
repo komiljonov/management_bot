@@ -119,8 +119,7 @@ class Bot(Updater):
                 update.message.reply_text("Iltimos botdan ro'yhatdan o'tish uchun quyodagi tugmani bosing👇", reply_markup=InlineKeyboardMarkup(
                     [[InlineKeyboardButton("Bo'tga o'tish!", url=helpers.create_deep_linked_url(context.bot.username, "register"))]]))
             else:
-                context.user_data['greeting'] = update.message.reply_html(
-                    f"""Assalomu alaykum <b>{user.first_name}</b>!\n\n<b>Ismingiz va familyangizni kiriting!</b>""", reply_markup=ReplyKeyboardRemove())
+              		context.user_data['greeting'] = update.message.reply_html(f"""Assalomu alaykum <b>{user.first_name}</b>!\n\n<b>Ismingiz va familyangizni kiriting!</b>""", reply_markup=ReplyKeyboardRemove())
             return NAME
         else:
             if not len(context.args if not context.args == None else []) <= 1 and context.args[0] == 'get_description':
@@ -209,91 +208,68 @@ class Bot(Updater):
         sent_req = msg_db.get_request_2(req['id'])
         sent_msgs2 = msg_db.get_messages_2(sent_req[0][1])
         confers_text = ""
-        print(req['status'])
-        if req['status'] == 0:
-            if update.callback_query.message.chat.type == "private":
+
+        if update.callback_query.message.chat.type == "private":
+            for conf in req['req_type']['confirmers']:
+                confers_text += f"{conf['name']}\n"
+
+            text = f"<b>So'rov tasdiqlandi!</b>\n<b>So'rov raqami</b>: {req['id']}\n<b>so'rov turi</b>: {req['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req['template']}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>:\n<b>-------------------------------</b>\n\n{confers_text}\n<b>-------------------------------</b>\ntasdiqlovchi: {user.first_name} (@{user.username})"
+            update_status = db.update_request_status(user.id, req['id'], 1)
+            if update_status['ok']:
+                for msg in sent_msgs2:
+                    # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2]
+                    try:
+                        context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML).pin()
+                    except: pass
+                    try:
+      	                context.bot.send_message(text=text, chat_id=req['user']['chat_id'], parse_mode=ParseMode.HTML).pin()
+                    except: pass
+        else:
+            if is_confirmer(req, user):
                 for conf in req['req_type']['confirmers']:
                     confers_text += f"{conf['name']}\n"
                 text = f"<b>So'rov tasdiqlandi!</b>\n<b>So'rov raqami</b>: {req['id']}\n<b>so'rov turi</b>: {req['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req['template']}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>:\n<b>-------------------------------</b>\n\n{confers_text}\n<b>-------------------------------</b>\ntasdiqlovchi: {user.first_name} (@{user.username})"
                 update_status = db.update_request_status(user.id, req['id'], 1)
                 if update_status['ok']:
+                    
                     for msg in sent_msgs2:
                         try:
-                            #context.bot.edit_message_text(
-                               # text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
-                            context.bot.edit_message_reply_markup(chat_id=msg[3], message_id=msg[2])
+                            # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
+                            context.bot.edit_message_text(
+                                text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
+                            context.bot.send_message(
+                                text=text, chat_id=msg[3], parse_mode=ParseMode.HTML).pin()
                         except:
                             pass
-                        try:
-                            context.bot.send_message(text=text, chat_id=msg[3], parse_mode="HTML")
-                        except: pass
-                    try:
-                        print(req['user']['chat_id'])
-                        context.bot.send_message(
-                            text=text, chat_id=req['user']['chat_id'], parse_mode=ParseMode.HTML).pin()
-                    except:
-                         pass
             else:
-                if is_confirmer(req, user):
-                    for conf in req['req_type']['confirmers']:
-                        confers_text += f"{conf['name']}\n"
-                    text = f"<b>So'rov tasdiqlandi!</b>\n<b>So'rov raqami</b>: {req['id']}\n<b>so'rov turi</b>: {req['req_type']['name']}\n<b>shablon</b>:\n<b>-------------------------------</b>\n{req['template']}\n<b>-------------------------------</b>\n<b>tasdiqlovchilar</b>:\n<b>-------------------------------</b>\n\n{confers_text}\n<b>-------------------------------</b>\ntasdiqlovchi: {user.first_name} (@{user.username})"
-                    update_status = db.update_request_status(
-                        user.id, req['id'], 1)
-                    if update_status['ok']:
+                update.callback_query.answer(
+                    "Kechirasiz siz bu so'rov tasdiqlovchilar qatorida emassiz!", show_alert=True)
 
-                        for msg in sent_msgs2:
-                            try:
-                                # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
-                                # context.bot.edit_message_text(
-                                # text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
-                                context.bot.edit_message_reply_markup(chat_id=msg[3], message_id=msg[2])
-                                context.bot.send_message(
-                                    text=text, chat_id=msg[3], parse_mode=ParseMode.HTML).pin()
-                            except:
-                                pass
-                        try:
-                                context.bot.send_message(
-                            text=text, chat_id=req['user']['chat_id'], parse_mode=ParseMode.HTML).pin()
-                        except: pass
-                    else:
-                        update.callback_query.answer(
-                            "Kechirasiz siz bu so'rov tasdiqlovchilar qatorida emassiz!", show_alert=True)
-        else:
-            update.callback_query.answer(
-                "Kechirasiz bu so'rov tasdiqlanib bo'lgan!" if req['status'] == 1 else "Kechirasiz bu so'rov rad etib bo'lingan!", show_alert=True)
-            return MENU
+                # update.callback_query.message.reply_text("Kechirasiz siz bu so'rov tasdiqlovchilar qatorida emassiz!")
 
     @is_authed_decorator
     def deny_request_from_user(self, update: Update, context: CallbackContext):
         user = update.callback_query.from_user
         req = db.get_request_from_user(user.id, int(
             update.callback_query.data.split(":")[1]))['data']
-        if req['status'] == 0:
-            if update.callback_query.message.chat.type == "private":
+        if update.callback_query.message.chat.type == "private":
+            context.user_data['checked_request_status'] = 1
+            context.user_data['checking_request'] = int(
+                update.callback_query.data.split(":")[1])
+            update.callback_query.message.reply_text(
+                "Iltimos so'rov uchun fikringizni yozing!", reply_markup=ReplyKeyboardRemove())
+            return GET_COMMENT_FOR_REQUEST
+        else:
+            if is_confirmer(req, user):
                 context.user_data['checked_request_status'] = 1
                 context.user_data['checking_request'] = int(
                     update.callback_query.data.split(":")[1])
-                update.callback_query.message.reply_text(
-                    "Iltimos so'rov uchun fikringizni yozing!", reply_markup=ReplyKeyboardRemove())
+                update.callback_query.message.reply_text("So'rovdagi kamchiliklarni yozish uchun bo'tga yozing!")
                 return GET_COMMENT_FOR_REQUEST
             else:
-                if is_confirmer(req, user):
-                    context.user_data['checked_request_status'] = 1
-                    context.user_data['checking_request'] = int(
-                        update.callback_query.data.split(":")[1])
-                    update.callback_query.message.reply_text(
-                        "So'rovdagi kamchiliklarni yozing!")
-                    return GET_COMMENT_FOR_REQUEST
-                else:
-                    update.callback_query.answer(
-                        "Kechirasiz siz bu so'rov tasdiqlovchilar qatorida emassiz!", show_alert=True)
+                update.callback_query.answer(
+                    "Kechirasiz siz bu so'rov tasdiqlovchilar qatorida emassiz!", show_alert=True)
                 # update.callback_query.message.reply_text("Kechirasiz siz bu so'rov tasdiqlovchilar qatorida emassiz!")
-        else:
-            update.callback_query.answer(
-                "Kechirasiz bu so'rov tasdiqlanib bo'lgan!" if req['status'] == 1 else "Kechirasiz bu so'rov rad etib bo'lingan!", show_alert=True)
-            return MENU
-
 
     @is_authed_decorator
     def get_comment_for_request(self, update: Update, context: CallbackContext):
@@ -311,24 +287,25 @@ class Bot(Updater):
 
         error_users = []
         if req['ok']:
+            
 
             for msg in sent_msgs2:
                 # context.bot.edit_message_text(text=text, chat_id=msg[3], chat_id=msg[2])
                 try:
-                    context.bot.edit_message_text(
-                        text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
+                    context.bot.edit_message_text(text=text, chat_id=msg[3], message_id=msg[2], parse_mode=ParseMode.HTML)
                 except:
                     error_users.append(msg)
                 try:
-                    context.bot.send_message(
-                        text=text, chat_id=msg[3], parse_mode=ParseMode.HTML).pin()
+                    context.bot.send_message(text=text, chat_id=msg[3], parse_mode=ParseMode.HTML).pin()
                 except:
                     error_users.append(msg)
+
+
 
         update.message.reply_text(
             checkkkk[context.user_data['checked_request_status']], reply_markup=keys)
         return MENU
-        
+
     @is_authed_decorator
     def get_waiting_sent_requests(self, update: Update, context: CallbackContext):
         user = update.message.from_user
@@ -395,12 +372,12 @@ class Bot(Updater):
         else:
             update.message.reply_text("Kechirasiz siz admin emassiz!")
         return MENU
-
+            
     def confirmed_requests(self, update: Update, context: CallbackContext):
         update.message.reply_text("Kelgan so'rovlarmi yoki yuborilgan!", reply_markup=ReplyKeyboardMarkup([[
             "kelgan so'rovlar",
             "yuborilgan so'rovlar",
-        ], ["◀️ortga"]], resize_keyboard=True))
+        ],"]], resize_keyboard=True))
         return CONFIRMED_REQUESTS
 
     def confirmed_come_requests(self, update: Update, context: CallbackContext):
@@ -445,7 +422,7 @@ class Bot(Updater):
         update.message.reply_text("Kelgan so'rovlarmi yoki yuborilgan!", reply_markup=ReplyKeyboardMarkup([[
             "kelgan so'rovlar",
             "yuborilgan so'rovlar",
-        ], ["◀️ortga"]], resize_keyboard=True))
+        ]], resize_keyboard=True))
         return DENIED_REQUESTS
 
     def denied_come_requests(self, update: Update, context: CallbackContext):
@@ -466,7 +443,7 @@ class Bot(Updater):
             update.message.reply_text(
                 "Kechirasiz hozircha so'rovlar yo'q!", reply_markup=make_menu_keyboards())
             return MENU
-    
+
     def denied_sent_requests(self, update: Update, context: CallbackContext):
         user = update.message.from_user
         reqs = db.get_denied_sent_requests(user.id)
