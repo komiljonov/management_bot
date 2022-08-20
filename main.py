@@ -42,6 +42,8 @@ class Bot(Updater):
         assert token, ValueError("Token is required")
         super().__init__(token)
 
+        not_start = ~Filters.regex("^(/start)$")
+
         self.conversation = ConversationHandler(
             entry_points=[
                 CommandHandler('start', self.start), CallbackQueryHandler(
@@ -60,31 +62,53 @@ class Bot(Updater):
                                self.denied_requests)
             ],
             states={
-                NAME: [MessageHandler(Filters.text, authentication.name)],
-                NUMBER: [MessageHandler(Filters.contact | Filters.regex("(?:\+[9]{2}[8][0-9]{2}[0-9]{3}[0-9]{2}[0-9]{2})"), authentication.number), ],
+                NAME: [MessageHandler(Filters.text & not_start, authentication.name)],
+                NUMBER: [MessageHandler(Filters.contact | Filters.regex("(?:\+[9]{2}[8][0-9]{2}[0-9]{3}[0-9]{2}[0-9]{2})") & not_start, authentication.number), ],
                 # DESCRIPTION: [MessageHandler(Filters.text, authentication.description), ],
                 WAIT: [CommandHandler('start', authentication.wait_start)],
-                MENU: [MessageHandler(Filters.regex("^🔖 So'rov yuborish$"), self.send_request), MessageHandler(Filters.regex("^🕓 Kutilayotgan so'rovlar"), self.get_waiting_sent_requests), MessageHandler(Filters.regex("^💤 Tasdiqlanmagan so'rovlar"), self.unconfirmed_requests), MessageHandler(Filters.regex("^✔️ Tasdiqlangan so'rovlar$"), self.confirmed_requests), MessageHandler(Filters.regex("^✖️ Rad etilgan so'rovlar$"),
-                                                                                                                                                                                                                                                                                                                                                                                           self.denied_requests)],
-                SELECT_REQUEST_TYPE: [MessageHandler(Filters.regex('^◀️ ortga'), lambda update, context:self.start(update, context)), MessageHandler(Filters.text, send_request_handler.req_type), CommandHandler('cancel', send_request_handler.cancel_request_2)],
-                GET_TEMPLATE: [MessageHandler(Filters.text, send_request_handler.get_template_text)],
+                MENU: [MessageHandler(
+                    Filters.regex("^🔖 So'rov yuborish$"), self.send_request),
+                    MessageHandler(Filters.regex("^🕓 Kutilayotgan so'rovlar"), self.get_waiting_sent_requests),
+                    MessageHandler(Filters.regex("^💤 Tasdiqlanmagan so'rovlar"), self.unconfirmed_requests),
+                    MessageHandler(Filters.regex("^✔️ Tasdiqlangan so'rovlar$"), self.confirmed_requests),
+                    MessageHandler(Filters.regex("^✖️ Rad etilgan so'rovlar$"), self.denied_requests)
+                ],
+                SELECT_REQUEST_TYPE: [
+                    MessageHandler(Filters.regex('^◀️ ortga'), self.start),
+                    MessageHandler(Filters.text & not_start, send_request_handler.req_type),
+                    CommandHandler('cancel', send_request_handler.cancel_request_2)
+                ],
+                GET_TEMPLATE: [
+                    MessageHandler(Filters.text, send_request_handler.get_template_text)
+                ],
                 # SELECT_CONFIRMERS: [CallbackQueryHandler(send_request_handler.add_confirmer, pattern="^add_confirmer"), CallbackQueryHandler(send_request_handler.remove_confirmer, pattern="^remove_confirmer"), CallbackQueryHandler(send_request_handler.done_request, pattern="^done_request"), CallbackQueryHandler(send_request_handler.cancel_request, pattern="^cancel_request")],
-                CHECK_REQUEST_TRUE_OR_FALSE: [CallbackQueryHandler(send_request_handler.confirm_request, pattern="^temp_accept_request_true"), CallbackQueryHandler(send_request_handler.error_request, pattern="^error_request_false"), MessageHandler(Filters.regex("^◀️ ortga"), self.back_from_confirm)],
-                GET_COMMENT_FOR_REQUEST: [MessageHandler(
-                    Filters.text, self.get_comment_for_request)],
-                CONFIRMED_REQUESTS: [MessageHandler(Filters.regex("^kelgan so'rovlar$"), self.confirmed_come_requests), MessageHandler(
-                    Filters.regex("^yuborilgan so'rovlar$"), self.confirmed_sent_requests)],
-                DENIED_REQUESTS: [MessageHandler(Filters.regex("^kelgan so'rovlar$"), self.denied_come_requests), MessageHandler(
-                    Filters.regex("^yuborilgan so'rovlar$"), self.denied_sent_requests)]
+                CHECK_REQUEST_TRUE_OR_FALSE: [
+                    CallbackQueryHandler(send_request_handler.confirm_request, pattern="^temp_accept_request_true"),
+                    CallbackQueryHandler(send_request_handler.error_request, pattern="^error_request_false"),
+                    MessageHandler(Filters.regex("^◀️ ortga"), self.back_from_confirm)
+                ],
+                GET_COMMENT_FOR_REQUEST: [
+                    MessageHandler(Filters.text & not_start, self.get_comment_for_request)
+                ],
+                CONFIRMED_REQUESTS: [
+                    MessageHandler(Filters.regex("^kelgan so'rovlar$"), self.confirmed_come_requests),
+                    MessageHandler(Filters.regex("^yuborilgan so'rovlar$"), self.confirmed_sent_requests)
+                ],
+                DENIED_REQUESTS: [
+                    MessageHandler(Filters.regex("^kelgan so'rovlar$"), self.denied_come_requests),
+                    MessageHandler(Filters.regex("^yuborilgan so'rovlar$"), self.denied_sent_requests)
+                ]
             },
-            fallbacks=[CommandHandler('start', self.start), CallbackQueryHandler(self.accept_request_admin, pattern="^accept_request"),
-                       CallbackQueryHandler(
-                           self.deny_request_admin, pattern="^deny_request"),
-                       CallbackQueryHandler(
-                           self.accept_request_from_user, pattern="^confirm_user_request"),
-                       CallbackQueryHandler(
-                           self.deny_request_from_user, pattern="^deny_user_request"),
-                       MessageHandler(Filters.regex("^🔖 So'rov yuborish$"), self.send_request), MessageHandler(Filters.regex("^🕓 Kutilayotgan so'rovlar"), self.get_waiting_sent_requests), MessageHandler(Filters.regex("^💤 Tasdiqlanmagan so'rovlar"), self.unconfirmed_requests)]
+            fallbacks=[
+                CommandHandler('start', self.start),
+                CallbackQueryHandler(self.accept_request_admin, pattern="^accept_request"),
+                CallbackQueryHandler(self.deny_request_admin, pattern="^deny_request"),
+                CallbackQueryHandler(self.accept_request_from_user, pattern="^confirm_user_request"),
+                CallbackQueryHandler(self.deny_request_from_user, pattern="^deny_user_request"),
+                MessageHandler(Filters.regex("^🔖 So'rov yuborish$"), self.send_request),
+                MessageHandler(Filters.regex("^🕓 Kutilayotgan so'rovlar"), self.get_waiting_sent_requests),
+                MessageHandler(Filters.regex("^💤 Tasdiqlanmagan so'rovlar"), self.unconfirmed_requests)
+            ]
         )
         self.dispatcher.add_handler(self.conversation)
         self.dispatcher.add_handler(CommandHandler("data", self.data))

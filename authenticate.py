@@ -20,6 +20,7 @@ class _Authentication:
         username = update.message.from_user.username
         user_id = update.message.from_user.id
         res = db.request_authorization(user_id, name, number, username)
+        
         if res != None and res['ok']:
             update.message.reply_text("Sizning so'rovingiz qabul qilindi!\nRuhsat berilganda o'zimiz malum qilamiz!\nAgarda uzoq vaqt habar kelmasa /start kommandasini yuboring!", reply_markup=ReplyKeyboardRemove())
             admins = db.get_admins_list(update.message.from_user.id)
